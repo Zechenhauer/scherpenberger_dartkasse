@@ -294,8 +294,7 @@
     <div class="controls-box">
         <div>
             <label for="matchDate">Spieltag Datum:</label><br>
-            <!-- Direkt im HTML als Fallback den letzten Donnerstag eingetragen -->
-            <input type="date" id="matchDate" class="date-input" value="2026-09-10" onchange="loadMatchdayData()">
+            <input type="date" id="matchDate" class="date-input" onchange="loadMatchdayData()">
         </div>
         <div style="text-align: right;">
             <label>Spieltag-Summe:</label><br>
@@ -334,18 +333,17 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Kugelsichere Ermittlung des letzten Donnerstags
-    function getLatestThursday() {
+    // Immer den letzten (oder heutigen) Donnerstag ermitteln
+    function getThursday() {
         const d = new Date();
         const day = d.getDay(); // 0=So, 1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr, 6=Sa
-        // Wenn heute Donnerstag (4), Freitag (5) oder Samstag (6) ist: gehe (day - 4) Tage zurück.
-        // Andernfalls (So bis Mi) gehe (7 - (4 - day)) Tage zurück.
-        let diff = (day >= 4) ? (day - 4) : (7 + day - 4);
+        // Abstand zum letzten Donnerstag berechnen
+        let diff = day >= 4 ? day - 4 : 7 - (4 - day);
         d.setDate(d.getDate() - diff);
         return d.toISOString().split('T')[0];
     }
 
-    let currentMatchDate = getLatestThursday();
+    let currentMatchDate = getThursday();
     let kasseRecords = [];
     let dueRecords = {};
     let isAdmin = false;
@@ -391,7 +389,6 @@
     }
 
     async function initApp() {
-        // Setze das Datum explizit beim Start (überschreibt auch den Browser-Cache)
         document.getElementById('matchDate').value = currentMatchDate;
         await fetchAllKasseData();
         await fetchDueData();
