@@ -60,7 +60,6 @@
             font-size: 14px;
         }
 
-        /* Admin Button oben rechts */
         .admin-toggle-btn {
             position: absolute;
             top: 0;
@@ -169,6 +168,26 @@
         }
         .amount-select:focus { border-color: var(--accent); }
 
+        .amount-input {
+            background: #1f2937;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 8px;
+            width: 90px;
+            font-family: inherit;
+            font-size: 14px;
+            text-align: right;
+            outline: none;
+            font-weight: 600;
+        }
+        .amount-input:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background: #111827;
+        }
+        .amount-input:focus { border-color: var(--accent); }
+
         .total-badge {
             background: rgba(56, 189, 248, 0.1);
             border: 1px solid var(--accent);
@@ -191,7 +210,7 @@
             align-items: center;
             justify-content: space-between;
         }
-        .due-select {
+        .due-input {
             color: #f87171;
             border-color: rgba(239, 68, 68, 0.4);
         }
@@ -305,12 +324,11 @@
     let dueRecords = {};
     let isAdmin = false;
 
-    // HIER DEIN PASSWORT FESTLEGEN:
     const ADMIN_PASSWORD = "pimmelkasse123"; 
 
     function toggleAdminMode() {
         if (!isAdmin) {
-            const pwd = prompt("2807");
+            const pwd = prompt("Bitte Admin-Passwort eingeben:");
             if (pwd === ADMIN_PASSWORD) {
                 isAdmin = true;
                 alert("Admin-Modus aktiviert!");
@@ -435,13 +453,18 @@
         container.innerHTML = '';
         let matchdayTotal = 0;
 
-        players.forEach(p => {
+        // Berechne für jeden Spieler den Wert an diesem Spieltag zum Sortieren (niedrigster oben)
+        let matchdayPlayers = players.map(p => {
             const record = kasseRecords.find(r => r.spieltag_datum === currentMatchDate && r.spieler === p.name);
             const fix = record ? parseFloat(record.fix_beitrag) : 5.00;
             const verloren = record ? parseFloat(record.verloren_betrag) : 0.00;
-            const gesamt = fix + verloren;
-            matchdayTotal += gesamt;
+            return { ...p, fix, verloren, gesamt: fix + verloren };
+        });
 
+        matchdayPlayers.sort((a, b) => a.gesamt - b.gesamt);
+
+        matchdayPlayers.forEach(p => {
+            matchdayTotal += p.gesamt;
             const card = document.createElement('div');
             card.className = 'player-row-card';
             card.innerHTML = `
@@ -449,9 +472,9 @@
                 <div class="inputs-group">
                     <span style="font-size: 12px; color: var(--text-muted);">Fix 5€ +</span>
                     <select class="amount-select" ${isAdmin ? '' : 'disabled'} onchange="updateRecord('${p.name}', 5.00, this.value)">
-                        ${generateAmountOptions(verloren)}
+                        ${generateAmountOptions(p.verloren)}
                     </select>
-                    <div class="total-badge">${gesamt.toFixed(2).replace('.', ',')} €</div>
+                    <div class="total-badge">${p.gesamt.toFixed(2).replace('.', ',')} €</div>
                 </div>
             `;
             container.appendChild(card);
@@ -464,15 +487,21 @@
         const container = document.getElementById('dueCardList');
         container.innerHTML = '';
 
-        players.forEach(p => {
+        // Berechne offene Beiträge und sortiere aufsteigend (niedrigster Betrag oben)
+        let duePlayers = players.map(p => {
             const dueVal = dueRecords[p.name] !== undefined ? dueRecords[p.name] : 0.00;
+            return { ...p, dueVal };
+        });
+
+        duePlayers.sort((a, b) => a.dueVal - b.dueVal);
+
+        duePlayers.forEach(p => {
             const card = document.createElement('div');
             card.className = 'due-card';
             card.innerHTML = `
                 <span class="player-name-badge ${p.css}">${p.name}</span>
-                <select class="amount-select due-select" ${isAdmin ? '' : 'disabled'} onchange="updateDueRecord('${p.name}', this.value)">
-                    ${generateAmountOptions(dueVal)}
-                </select>
+                <input type="number" step="0.50" min="0" class="amount-input due-input" ${isAdmin ? '' : 'disabled'} 
+                    value="${p.dueVal.toFixed(2)}" onchange="updateDueRecord('${p.name}', this.value)" placeholder="0,00 €">
             `;
             container.appendChild(card);
         });
@@ -485,7 +514,7 @@
         const now = new Date();
         const currentYearMonth = now.toISOString().slice(0, 7);
 
-        players.forEach(p => {
+        let statsData = players.map(p => {
             let sumTotal = 0;
             let monthTotal = 0;
             const playerMonths = new Set();
@@ -508,15 +537,22 @@
             const playerMonthsCount = Math.max(1, playerMonths.size);
             const playerMonthlyAvg = sumTotal / playerMonthsCount;
 
+            return { ...p, sumTotal, monthTotal, playerMonthlyAvg };
+        });
+
+        // Sortierung nach Gesamtsumme: niedrigster Betrag oben
+        statsData.sort((a, b) => a.sumTotal - b.sumTotal);
+
+        statsData.forEach(p => {
             const card = document.createElement('div');
             card.className = 'stats-card';
             card.innerHTML = `
                 <span class="player-name-badge ${p.css}">${p.name}</span>
                 <div class="stats-values">
-                    <span>Diesen Monat: <strong style="color: var(--success);">${monthTotal.toFixed(2).replace('.', ',')} €</strong></span>
-                    <span>Monatsschnitt: <strong style="color: var(--text-main);">${playerMonthlyAvg.toFixed(2).replace('.', ',')} €</strong></span>
+                    <span>Diesen Monat: <strong style="color: var(--success);">${p.monthTotal.toFixed(2).replace('.', ',')} €</strong></span>
+                    <span>Monatsschnitt: <strong style="color: var(--text-main);">${p.playerMonthlyAvg.toFixed(2).replace('.', ',')} €</strong></span>
                 </div>
-                <div class="stats-total">${sumTotal.toFixed(2).replace('.', ',')} €</div>
+                <div class="stats-total">${p.sumTotal.toFixed(2).replace('.', ',')} €</div>
             `;
             container.appendChild(card);
         });
