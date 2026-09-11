@@ -558,12 +558,13 @@
             });
 
             const playerMonthsCount = Math.max(1, playerMonths.size);
-            const playerMonthlyAvg = sumTotal / playerMonthsCount;
+            let rawMonthlyAvg = sumTotal / playerMonthsCount;
+            // Runde auf nächste 50-Cent-Stufe (z.B. 34.78 -> 34.50 oder 34.75)
+            const playerMonthlyAvg = Math.round(rawMonthlyAvg * 2) / 2;
 
             return { ...p, sumTotal, monthTotal, playerMonthlyAvg };
         });
 
-        // Sortierung nach Gesamtsumme (niedrigster Betrag oben) bleibt erhalten
         statsData.sort((a, b) => a.sumTotal - b.sumTotal);
 
         statsData.forEach(p => {
