@@ -191,39 +191,41 @@
             justify-content: space-between;
         }
 
-        /* Perfekt lesbares Eingabefeld für offene Beiträge mit €-Symbol */
         .due-input-wrapper {
             position: relative;
             display: inline-flex;
             align-items: center;
         }
         .due-input {
-            background: #1f2937;
-            border: 1px solid var(--card-border);
-            color: var(--text-main);
-            padding: 8px 30px 8px 12px;
-            border-radius: 8px;
-            width: 110px;
+            background: #1e293b;
+            border: 2px solid var(--accent);
+            color: #ffffff;
+            padding: 8px 36px 8px 14px;
+            border-radius: 10px;
+            width: 130px;
             font-family: inherit;
-            font-size: 15px;
+            font-size: 16px;
             text-align: right;
             outline: none;
             font-weight: 700;
         }
         .due-input:disabled {
-            opacity: 0.8;
+            opacity: 0.9;
             cursor: not-allowed;
             background: #111827;
+            border-color: var(--card-border);
+            color: #f8fafc;
         }
         .due-input:focus { 
-            border-color: var(--accent); 
+            border-color: #f59e0b; 
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
         }
         .currency-symbol {
             position: absolute;
             right: 12px;
             color: var(--accent);
             font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             pointer-events: none;
         }
 
@@ -331,7 +333,19 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    let currentMatchDate = new Date().toISOString().split('T')[0];
+    // Funktion, um automatisch den letzten (oder heutigen) Donnerstag zu ermitteln
+    function getLatestThursday() {
+        const d = new Date();
+        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, ...
+        // Berechne Abstand zum letzten Donnerstag
+        // Wenn heute Donnerstag ist (4), diff = 0. Wenn Freitag (5), diff = 1, etc.
+        // Wenn Sonntag (0), war der Donnerstag vor 3 Tagen (-3).
+        let diff = (day < 4) ? (day + 3) : (day - 4);
+        d.setDate(d.getDate() - diff);
+        return d.toISOString().split('T')[0];
+    }
+
+    let currentMatchDate = getLatestThursday();
     let kasseRecords = [];
     let dueRecords = {};
     let isAdmin = false;
