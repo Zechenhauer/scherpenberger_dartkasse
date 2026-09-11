@@ -168,26 +168,6 @@
         }
         .amount-select:focus { border-color: var(--accent); }
 
-        .amount-input {
-            background: #1f2937;
-            border: 1px solid var(--card-border);
-            color: var(--text-main);
-            padding: 8px 10px;
-            border-radius: 8px;
-            width: 90px;
-            font-family: inherit;
-            font-size: 14px;
-            text-align: right;
-            outline: none;
-            font-weight: 600;
-        }
-        .amount-input:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            background: #111827;
-        }
-        .amount-input:focus { border-color: var(--accent); }
-
         .total-badge {
             background: rgba(56, 189, 248, 0.1);
             border: 1px solid var(--accent);
@@ -210,9 +190,41 @@
             align-items: center;
             justify-content: space-between;
         }
+
+        /* Perfekt lesbares Eingabefeld für offene Beiträge mit €-Symbol */
+        .due-input-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
         .due-input {
-            color: #f87171;
-            border-color: rgba(239, 68, 68, 0.4);
+            background: #1f2937;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 8px 30px 8px 12px;
+            border-radius: 8px;
+            width: 110px;
+            font-family: inherit;
+            font-size: 15px;
+            text-align: right;
+            outline: none;
+            font-weight: 700;
+        }
+        .due-input:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+            background: #111827;
+        }
+        .due-input:focus { 
+            border-color: var(--accent); 
+        }
+        .currency-symbol {
+            position: absolute;
+            right: 12px;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 15px;
+            pointer-events: none;
         }
 
         .stats-card {
@@ -398,9 +410,10 @@
         }
     }
 
-    async function updateDueRecord(player, amount) {
+    async function updateDueRecord(player, rawValue) {
         if (!isAdmin) return;
-        const val = parseFloat(amount) || 0;
+        const cleanedValue = rawValue.replace(',', '.');
+        const val = parseFloat(cleanedValue) || 0;
         dueRecords[player] = val;
         try {
             await supabaseClient.from('mannschaftskasse_offen').upsert({
@@ -453,7 +466,6 @@
         container.innerHTML = '';
         let matchdayTotal = 0;
 
-        // Berechne für jeden Spieler den Wert an diesem Spieltag zum Sortieren (niedrigster oben)
         let matchdayPlayers = players.map(p => {
             const record = kasseRecords.find(r => r.spieltag_datum === currentMatchDate && r.spieler === p.name);
             const fix = record ? parseFloat(record.fix_beitrag) : 5.00;
@@ -487,7 +499,6 @@
         const container = document.getElementById('dueCardList');
         container.innerHTML = '';
 
-        // Berechne offene Beiträge und sortiere aufsteigend (niedrigster Betrag oben)
         let duePlayers = players.map(p => {
             const dueVal = dueRecords[p.name] !== undefined ? dueRecords[p.name] : 0.00;
             return { ...p, dueVal };
@@ -496,12 +507,19 @@
         duePlayers.sort((a, b) => a.dueVal - b.dueVal);
 
         duePlayers.forEach(p => {
+            const formattedVal = p.dueVal.toFixed(2).replace('.', ',');
             const card = document.createElement('div');
             card.className = 'due-card';
             card.innerHTML = `
                 <span class="player-name-badge ${p.css}">${p.name}</span>
-                <input type="number" step="0.50" min="0" class="amount-input due-input" ${isAdmin ? '' : 'disabled'} 
-                    value="${p.dueVal.toFixed(2)}" onchange="updateDueRecord('${p.name}', this.value)" placeholder="0,00 €">
+                <div class="due-input-wrapper">
+                    <input type="text" class="due-input" ${isAdmin ? '' : 'disabled'} 
+                        value="${formattedVal}" 
+                        onchange="updateDueRecord('${p.name}', this.value)" 
+                        onblur="this.value = parseFloat(this.value.replace(',', '.') || 0).toFixed(2).replace('.', ',')"
+                        placeholder="0,00">
+                    <span class="currency-symbol">€</span>
+                </div>
             `;
             container.appendChild(card);
         });
@@ -540,7 +558,6 @@
             return { ...p, sumTotal, monthTotal, playerMonthlyAvg };
         });
 
-        // Sortierung nach Gesamtsumme: niedrigster Betrag oben
         statsData.sort((a, b) => a.sumTotal - b.sumTotal);
 
         statsData.forEach(p => {
