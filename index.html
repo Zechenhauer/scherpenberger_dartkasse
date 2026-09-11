@@ -333,14 +333,12 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Funktion, um automatisch den letzten (oder heutigen) Donnerstag zu ermitteln
+    // Korrigierte Funktion für den letzten/heutigen Donnerstag (Donnerstag = 4)
     function getLatestThursday() {
         const d = new Date();
-        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, ...
+        const day = d.getDay(); // 0 = So, 1 = Mo, 2 = Di, 3 = Mi, 4 = Do, 5 = Fr, 6 = Sa
         // Berechne Abstand zum letzten Donnerstag
-        // Wenn heute Donnerstag ist (4), diff = 0. Wenn Freitag (5), diff = 1, etc.
-        // Wenn Sonntag (0), war der Donnerstag vor 3 Tagen (-3).
-        let diff = (day < 4) ? (day + 3) : (day - 4);
+        let diff = (day < 4) ? (7 - (4 - day)) : (day - 4);
         d.setDate(d.getDate() - diff);
         return d.toISOString().split('T')[0];
     }
