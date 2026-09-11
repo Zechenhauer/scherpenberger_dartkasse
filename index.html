@@ -40,11 +40,13 @@
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 25px;
+            position: relative;
         }
 
         .header {
             text-align: center;
             margin-bottom: 25px;
+            position: relative;
         }
         .header h1 {
             font-size: 26px;
@@ -56,6 +58,27 @@
             color: var(--text-muted);
             margin: 0;
             font-size: 14px;
+        }
+
+        /* Admin Button oben rechts */
+        .admin-toggle-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(248, 250, 252, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .admin-toggle-btn.active {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--success);
+            color: var(--success);
         }
 
         .section-title {
@@ -138,6 +161,11 @@
             outline: none;
             font-weight: 600;
             cursor: pointer;
+        }
+        .amount-select:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background: #111827;
         }
         .amount-select:focus { border-color: var(--accent); }
 
@@ -223,6 +251,7 @@
 
 <div class="container">
     <div class="header">
+        <button id="adminBtn" class="admin-toggle-btn" onclick="toggleAdminMode()">🔒 Admin</button>
         <h1>👑 Pimmelprinzen</h1>
         <p>Mannschaftskasse & Auswertung</p>
     </div>
@@ -274,8 +303,39 @@
     let currentMatchDate = new Date().toISOString().split('T')[0];
     let kasseRecords = [];
     let dueRecords = {};
+    let isAdmin = false;
 
-    // Generiert die HTML-Optionen für Beträge von 0.00 bis 15.00 in 0.50 Schritten
+    // HIER DEIN PASSWORT FESTLEGEN:
+    const ADMIN_PASSWORD = "pimmelkasse123"; 
+
+    function toggleAdminMode() {
+        if (!isAdmin) {
+            const pwd = prompt("2807");
+            if (pwd === ADMIN_PASSWORD) {
+                isAdmin = true;
+                alert("Admin-Modus aktiviert!");
+            } else if (pwd !== null) {
+                alert("Falsches Passwort!");
+                return;
+            } else {
+                return;
+            }
+        } else {
+            isAdmin = false;
+            alert("Admin-Modus gesperrt.");
+        }
+
+        const btn = document.getElementById('adminBtn');
+        if (isAdmin) {
+            btn.textContent = "🔓 Admin Aktiv";
+            btn.classList.add('active');
+        } else {
+            btn.textContent = "🔒 Admin";
+            btn.classList.remove('active');
+        }
+        updateUI();
+    }
+
     function generateAmountOptions(selectedValue) {
         let options = '';
         for (let i = 0; i <= 30; i++) {
@@ -321,6 +381,7 @@
     }
 
     async function updateDueRecord(player, amount) {
+        if (!isAdmin) return;
         const val = parseFloat(amount) || 0;
         dueRecords[player] = val;
         try {
@@ -335,6 +396,7 @@
     }
 
     async function updateRecord(player, fixBeitrag, verlorenBetrag) {
+        if (!isAdmin) return;
         currentMatchDate = document.getElementById('matchDate').value;
         const fix = parseFloat(fixBeitrag) || 5.00;
         const verloren = parseFloat(verlorenBetrag) || 0.00;
@@ -386,7 +448,7 @@
                 <span class="player-name-badge ${p.css}">${p.name}</span>
                 <div class="inputs-group">
                     <span style="font-size: 12px; color: var(--text-muted);">Fix 5€ +</span>
-                    <select class="amount-select" onchange="updateRecord('${p.name}', 5.00, this.value)">
+                    <select class="amount-select" ${isAdmin ? '' : 'disabled'} onchange="updateRecord('${p.name}', 5.00, this.value)">
                         ${generateAmountOptions(verloren)}
                     </select>
                     <div class="total-badge">${gesamt.toFixed(2).replace('.', ',')} €</div>
@@ -408,7 +470,7 @@
             card.className = 'due-card';
             card.innerHTML = `
                 <span class="player-name-badge ${p.css}">${p.name}</span>
-                <select class="amount-select due-select" onchange="updateDueRecord('${p.name}', this.value)">
+                <select class="amount-select due-select" ${isAdmin ? '' : 'disabled'} onchange="updateDueRecord('${p.name}', this.value)">
                     ${generateAmountOptions(dueVal)}
                 </select>
             `;
