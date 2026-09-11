@@ -243,15 +243,10 @@
         .stats-values {
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
+            gap: 3px;
             color: var(--text-muted);
-            font-size: 12px;
-        }
-        .stats-total {
-            font-weight: 700;
-            color: var(--accent);
-            font-size: 15px;
+            font-size: 13px;
+            text-align: left;
         }
 
         .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; }
@@ -313,9 +308,6 @@
     <div class="section-title">Gesamtauswertung pro Spieler</div>
     <div id="statsCardList"></div>
 
-    <div class="footer-nav">
-        <a href="index.html" class="btn-back">👑 Zurück zum Hauptmenü</a>
-    </div>
 </div>
 
 <script>
@@ -333,14 +325,11 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Zeitzonen-sichere Ermittlung des letzten Donnerstags im lokalen Datum
     function getLatestThursday() {
         const d = new Date();
         const day = d.getDay(); // 0=So, 1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr, 6=Sa
         let diff = (day >= 4) ? (day - 4) : (7 + day - 4);
         d.setDate(d.getDate() - diff);
-        
-        // Lokales Datum fehlerfrei formatieren (verhindert den UTC-Verschiebungs-Bug)
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const dayOfMonth = String(d.getDate()).padStart(2, '0');
@@ -574,6 +563,7 @@
             return { ...p, sumTotal, monthTotal, playerMonthlyAvg };
         });
 
+        // Sortierung nach Gesamtsumme (niedrigster Betrag oben) bleibt erhalten
         statsData.sort((a, b) => a.sumTotal - b.sumTotal);
 
         statsData.forEach(p => {
@@ -582,10 +572,9 @@
             card.innerHTML = `
                 <span class="player-name-badge ${p.css}">${p.name}</span>
                 <div class="stats-values">
-                    <span>Diesen Monat: <strong style="color: var(--success);">${p.monthTotal.toFixed(2).replace('.', ',')} €</strong></span>
-                    <span>Monatsschnitt: <strong style="color: var(--text-main);">${p.playerMonthlyAvg.toFixed(2).replace('.', ',')} €</strong></span>
+                    <div>Diesen Monat: <strong style="color: var(--success);">${p.monthTotal.toFixed(2).replace('.', ',')} €</strong></div>
+                    <div>Monatsschnitt: <strong style="color: var(--text-main);">${p.playerMonthlyAvg.toFixed(2).replace('.', ',')} €</strong></div>
                 </div>
-                <div class="stats-total">${p.sumTotal.toFixed(2).replace('.', ',')} €</div>
             `;
             container.appendChild(card);
         });
