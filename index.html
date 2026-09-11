@@ -333,12 +333,11 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Korrigierte Funktion für den letzten/heutigen Donnerstag (Donnerstag = 4)
+    // Zuverlässige Ermittlung des letzten Donnerstags (Donnerstag = 4)
     function getLatestThursday() {
         const d = new Date();
-        const day = d.getDay(); // 0 = So, 1 = Mo, 2 = Di, 3 = Mi, 4 = Do, 5 = Fr, 6 = Sa
-        // Berechne Abstand zum letzten Donnerstag
-        let diff = (day < 4) ? (7 - (4 - day)) : (day - 4);
+        const day = d.getDay(); // 0=So, 1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr, 6=Sa
+        let diff = (day >= 4) ? (day - 4) : (7 - (4 - day));
         d.setDate(d.getDate() - diff);
         return d.toISOString().split('T')[0];
     }
