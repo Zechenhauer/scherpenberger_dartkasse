@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Pimmelprinzen - Mannschaftskasse</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-inner: #111827;
+            --card-border: #334155;
+            --accent: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 25px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .header h1 {
+            font-size: 26px;
+            color: var(--accent);
+            margin: 0 0 5px 0;
+            font-weight: 700;
+        }
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 25px 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .controls-box {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .controls-box label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .date-input {
+            background: #1f2937;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+        }
+        .matchday-sum {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 15px;
+        }
+
+        .player-row-card {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-name-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid currentColor;
+        }
+
+        .inputs-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .amount-select {
+            background: #1f2937;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .amount-select:focus { border-color: var(--accent); }
+
+        .total-badge {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 75px;
+            text-align: right;
+        }
+
+        .due-card {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .due-select {
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .stats-card {
+            background: var(--card-inner);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .stats-values {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .stats-total {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 15px;
+        }
+
+        .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; }
+        .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; }
+        .p-Günni { background-color: rgba(56, 142, 60, 0.15); color: #66bb6a; }
+        .p-HerrProfessor { background-color: rgba(245, 124, 0, 0.15); color: #ffa726; }
+        .p-Pepe { background-color: rgba(211, 47, 47, 0.15); color: #ef5350; }
+        .p-Libero { background-color: rgba(0, 121, 107, 0.15); color: #26a69a; }
+        .p-Illie { background-color: rgba(113, 113, 113, 0.15); color: #cfd8dc; }
+
+        .footer-nav { text-align: center; margin-top: 30px; }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(248, 250, 252, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: rgba(248, 250, 252, 0.15); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>👑 Pimmelprinzen</h1>
+        <p>Mannschaftskasse & Auswertung</p>
+    </div>
+
+    <!-- SPIELTAG STEUERUNG -->
+    <div class="section-title">Spieltag Erfassung</div>
+    <div class="controls-box">
+        <div>
+            <label for="matchDate">Spieltag Datum:</label><br>
+            <input type="date" id="matchDate" class="date-input" onchange="loadMatchdayData()">
+        </div>
+        <div style="text-align: right;">
+            <label>Spieltag-Summe:</label><br>
+            <span class="matchday-sum" id="matchdayTotalSum">0,00 €</span>
+        </div>
+    </div>
+
+    <!-- SPIELTAG LISTE -->
+    <div id="playerCardList"></div>
+
+    <!-- OFFENE POSTEN -->
+    <div class="section-title">Offene Beiträge</div>
+    <div id="dueCardList"></div>
+
+    <!-- GESAMTAUSWERTUNG -->
+    <div class="section-title">Gesamtauswertung pro Spieler</div>
+    <div id="statsCardList"></div>
+
+    <div class="footer-nav">
+        <a href="index.html" class="btn-back">👑 Zurück zum Hauptmenü</a>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://lhusylpjnujlqomougmg.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_yXEueWILvAq-Vm2VfTuYyg_BIQeE1KK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const players = [
+        { name: "MetalBoller", css: "p-MetalBoller" },
+        { name: "Daszebra", css: "p-Daszebra" },
+        { name: "Günni", css: "p-Günni" },
+        { name: "HerrProfessor", css: "p-HerrProfessor" },
+        { name: "Pepe", css: "p-Pepe" },
+        { name: "Libero", css: "p-Libero" },
+        { name: "Illie", css: "p-Illie" }
+    ];
+
+    let currentMatchDate = new Date().toISOString().split('T')[0];
+    let kasseRecords = [];
+    let dueRecords = {};
+
+    // Generiert die HTML-Optionen für Beträge von 0.00 bis 15.00 in 0.50 Schritten
+    function generateAmountOptions(selectedValue) {
+        let options = '';
+        for (let i = 0; i <= 30; i++) {
+            let val = (i * 0.5).toFixed(2);
+            let selected = Math.abs(parseFloat(val) - parseFloat(selectedValue)) < 0.01 ? 'selected' : '';
+            options += `<option value="${val}" ${selected}>${val.replace('.', ',')} €</option>`;
+        }
+        return options;
+    }
+
+    async function initApp() {
+        document.getElementById('matchDate').value = currentMatchDate;
+        await fetchAllKasseData();
+        await fetchDueData();
+    }
+
+    async function fetchAllKasseData() {
+        try {
+            const { data, error } = await supabaseClient.from('mannschaftskasse').select('*');
+            if (error) throw error;
+            kasseRecords = data || [];
+            updateUI();
+        } catch (err) {
+            console.error("Fehler beim Laden:", err);
+            kasseRecords = [];
+            updateUI();
+        }
+    }
+
+    async function fetchDueData() {
+        try {
+            const { data, error } = await supabaseClient.from('mannschaftskasse_offen').select('*');
+            if (error) throw error;
+            dueRecords = {};
+            if (data) {
+                data.forEach(r => { dueRecords[r.spieler] = parseFloat(r.offener_betrag) || 0; });
+            }
+            renderDueList();
+        } catch (err) {
+            console.error("Fehler beim Laden der offenen Posten:", err);
+            renderDueList();
+        }
+    }
+
+    async function updateDueRecord(player, amount) {
+        const val = parseFloat(amount) || 0;
+        dueRecords[player] = val;
+        try {
+            await supabaseClient.from('mannschaftskasse_offen').upsert({
+                spieler: player,
+                offener_betrag: val,
+                updated_at: new Date()
+            }, { onConflict: 'spieler' });
+        } catch (err) {
+            console.error("Fehler beim Speichern:", err);
+        }
+    }
+
+    async function updateRecord(player, fixBeitrag, verlorenBetrag) {
+        currentMatchDate = document.getElementById('matchDate').value;
+        const fix = parseFloat(fixBeitrag) || 5.00;
+        const verloren = parseFloat(verlorenBetrag) || 0.00;
+        
+        try {
+            await supabaseClient.from('mannschaftskasse').upsert({
+                spieltag_datum: currentMatchDate,
+                spieler: player,
+                fix_beitrag: fix,
+                verloren_betrag: verloren,
+                updated_at: new Date()
+            }, { onConflict: 'spieltag_datum,spieler' });
+            
+            const index = kasseRecords.findIndex(r => r.spieltag_datum === currentMatchDate && r.spieler === player);
+            if (index !== -1) {
+                kasseRecords[index].fix_beitrag = fix;
+                kasseRecords[index].verloren_betrag = verloren;
+            } else {
+                kasseRecords.push({ spieltag_datum: currentMatchDate, spieler: player, fix_beitrag: fix, verloren_betrag: verloren });
+            }
+            updateUI();
+        } catch (err) {
+            console.error("Fehler beim Speichern:", err);
+        }
+    }
+
+    function updateUI() {
+        renderMatchdayCards();
+        renderDueList();
+        renderStatsCards();
+    }
+
+    function renderMatchdayCards() {
+        currentMatchDate = document.getElementById('matchDate').value;
+        const container = document.getElementById('playerCardList');
+        container.innerHTML = '';
+        let matchdayTotal = 0;
+
+        players.forEach(p => {
+            const record = kasseRecords.find(r => r.spieltag_datum === currentMatchDate && r.spieler === p.name);
+            const fix = record ? parseFloat(record.fix_beitrag) : 5.00;
+            const verloren = record ? parseFloat(record.verloren_betrag) : 0.00;
+            const gesamt = fix + verloren;
+            matchdayTotal += gesamt;
+
+            const card = document.createElement('div');
+            card.className = 'player-row-card';
+            card.innerHTML = `
+                <span class="player-name-badge ${p.css}">${p.name}</span>
+                <div class="inputs-group">
+                    <span style="font-size: 12px; color: var(--text-muted);">Fix 5€ +</span>
+                    <select class="amount-select" onchange="updateRecord('${p.name}', 5.00, this.value)">
+                        ${generateAmountOptions(verloren)}
+                    </select>
+                    <div class="total-badge">${gesamt.toFixed(2).replace('.', ',')} €</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        document.getElementById('matchdayTotalSum').textContent = matchdayTotal.toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function renderDueList() {
+        const container = document.getElementById('dueCardList');
+        container.innerHTML = '';
+
+        players.forEach(p => {
+            const dueVal = dueRecords[p.name] !== undefined ? dueRecords[p.name] : 0.00;
+            const card = document.createElement('div');
+            card.className = 'due-card';
+            card.innerHTML = `
+                <span class="player-name-badge ${p.css}">${p.name}</span>
+                <select class="amount-select due-select" onchange="updateDueRecord('${p.name}', this.value)">
+                    ${generateAmountOptions(dueVal)}
+                </select>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderStatsCards() {
+        const container = document.getElementById('statsCardList');
+        container.innerHTML = '';
+
+        const now = new Date();
+        const currentYearMonth = now.toISOString().slice(0, 7);
+
+        players.forEach(p => {
+            let sumTotal = 0;
+            let monthTotal = 0;
+            const playerMonths = new Set();
+
+            kasseRecords.forEach(r => {
+                if (r.spieler === p.name) {
+                    const spielGesamt = parseFloat(r.fix_beitrag || 5) + parseFloat(r.verloren_betrag || 0);
+                    sumTotal += spielGesamt;
+
+                    if (r.spieltag_datum) {
+                        const m = r.spieltag_datum.slice(0, 7);
+                        playerMonths.add(m);
+                        if (m === currentYearMonth) {
+                            monthTotal += spielGesamt;
+                        }
+                    }
+                }
+            });
+
+            const playerMonthsCount = Math.max(1, playerMonths.size);
+            const playerMonthlyAvg = sumTotal / playerMonthsCount;
+
+            const card = document.createElement('div');
+            card.className = 'stats-card';
+            card.innerHTML = `
+                <span class="player-name-badge ${p.css}">${p.name}</span>
+                <div class="stats-values">
+                    <span>Diesen Monat: <strong style="color: var(--success);">${monthTotal.toFixed(2).replace('.', ',')} €</strong></span>
+                    <span>Monatsschnitt: <strong style="color: var(--text-main);">${playerMonthlyAvg.toFixed(2).replace('.', ',')} €</strong></span>
+                </div>
+                <div class="stats-total">${sumTotal.toFixed(2).replace('.', ',')} €</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function loadMatchdayData() {
+        renderMatchdayCards();
+    }
+
+    window.onload = initApp;
+</script>
+</body>
+</html>
